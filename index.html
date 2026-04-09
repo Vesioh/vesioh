@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vesioh — Buy, Sell, Deliver</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            cream: { 50:'#FFFDF7',100:'#FFF8F0',200:'#FFF1E6',300:'#F5E6D3',400:'#E8D5C4',500:'#D4BFA8',600:'#C4A882',700:'#A88B64',800:'#7A6558',900:'#2C1810' },
+            caramel: { 400:'#D4956A',500:'#C47D4E',600:'#A8623A',700:'#8A4E2E' },
+            terracotta: { 500:'#C0544F',600:'#A8433F' },
+            sage: { 500:'#5B8C5A',600:'#4A7349' },
+            gold: { 500:'#D4A24E',600:'#B8882E' }
+          },
+          fontFamily: {
+            display: ['Playfair Display','serif'],
+            body: ['DM Sans','sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-pattern min-h-screen">
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- NAV -->
+  <nav class="sticky top-0 z-50 border-b border-cream-400" style="background:rgba(255,248,240,.88);backdrop-filter:blur(16px)">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6">
+      <div class="flex items-center justify-between h-16">
+        <a href="#" onclick="go('home');return false" class="flex items-center gap-2 shrink-0">
+          <div class="w-9 h-9 rounded-lg bg-caramel-500 flex items-center justify-center"><i class="fas fa-store text-white text-sm"></i></div>
+          <span class="font-display font-extrabold text-xl text-cream-900 tracking-tight">Vesioh</span>
+        </a>
+        <div class="hidden md:flex flex-1 max-w-xl mx-8">
+          <div class="relative w-full">
+            <input type="text" id="searchInput" placeholder="Search products, brands..." class="w-full h-10 pl-4 pr-12 rounded-full border border-cream-400 bg-white/70 text-cream-900 text-sm focus:outline-none focus:ring-2 focus:ring-caramel-500/40 focus:border-caramel-500" onkeydown="if(event.key==='Enter')doSearch()">
+            <button onclick="doSearch()" class="absolute right-1 top-1 w-8 h-8 rounded-full bg-caramel-500 text-white flex items-center justify-center hover:bg-caramel-600"><i class="fas fa-search text-xs"></i></button>
+          </div>
+        </div>
+        <div class="hidden md:flex items-center gap-1">
+          <a href="#" onclick="go('home');return false" class="nav-link active px-3 py-2 text-sm font-medium text-cream-900 hover:text-caramel-500" data-nav="home">Home</a>
+          <a href="#" onclick="go('categories');return false" class="nav-link px-3 py-2 text-sm font-medium text-cream-800 hover:text-caramel-500" data-nav="categories">Categories</a>
+          <a href="#" onclick="go('rider');return false" class="nav-link px-3 py-2 text-sm font-medium text-cream-800 hover:text-caramel-500" data-nav="rider"><i class="fas fa-motorcycle mr-1"></i>Riders</a>
+          <a href="#" onclick="go('sell');return false" class="nav-link px-3 py-2 text-sm font-medium text-cream-800 hover:text-caramel-500" data-nav="sell">Sell</a>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="openCart()" class="relative w-10 h-10 rounded-full bg-cream-200 flex items-center justify-center hover:bg-cream-300" aria-label="Cart">
+            <i class="fas fa-shopping-bag text-cream-900"></i>
+            <span id="cartBadge" class="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-terracotta-500 text-white text-[10px] font-bold flex items-center justify-center badge-pulse hidden">0</span>
+          </button>
+          <button onclick="toast('No new notifications','info')" class="relative w-10 h-10 rounded-full bg-cream-200 items-center justify-center hover:bg-cream-300 hidden sm:flex" aria-label="Notifications"><i class="fas fa-bell text-cream-900"></i></button>
+          <div id="authBtn"><button onclick="openAuth('login')" class="h-10 px-5 rounded-full bg-caramel-500 text-white text-sm font-semibold hover:bg-caramel-600 shadow-sm">Sign In</button></div>
+          <div id="profBtn" class="hidden">
+            <button onclick="document.getElementById('profDrop').classList.toggle('hidden')" class="flex items-center gap-2 h-10 pl-2 pr-3 rounded-full bg-cream-200 hover:bg-cream-300">
+              <div class="w-7 h-7 rounded-full bg-caramel-500 text-white flex items-center justify-center text-xs font-bold" id="avInit">U</div>
+              <span class="text-sm font-medium text-cream-900 hidden sm:inline" id="avName">User</span>
+              <i class="fas fa-chevron-down text-[10px] text-cream-800"></i>
+            </button>
+            <div id="profDrop" class="hidden absolute right-4 top-14 w-52 bg-white rounded-xl shadow-xl border border-cream-400 py-2 z-50">
+              <a href="#" onclick="go('profile');return false" class="flex items-center gap-3 px-4 py-2.5 text-sm text-cream-900 hover:bg-cream-100"><i class="fas fa-user w-4 text-cream-800"></i>My Profile</a>
+              <a href="#" onclick="go('orders');return false" class="flex items-center gap-3 px-4 py-2.5 text-sm text-cream-900 hover:bg-cream-100"><i class="fas fa-box w-4 text-cream-800"></i>My Orders</a>
+              <a href="#" onclick="go('sell');return false" class="flex items-center gap-3 px-4 py-2.5 text-sm text-cream-900 hover:bg-cream-100"><i class="fas fa-tag w-4 text-cream-800"></i>Sell Items</a>
+              <a href="#" onclick="go('rider');return false" class="flex items-center gap-3 px-4 py-2.5 text-sm text-cream-900 hover:bg-cream-100"><i class="fas fa-motorcycle w-4 text-cream-800"></i>Rider Dashboard</a>
+              <hr class="my-1 border-cream-300">
+              <a href="#" onclick="signOut();return false" class="flex items-center gap-3 px-4 py-2.5 text-sm text-terracotta-500 hover:bg-cream-100"><i class="fas fa-sign-out-alt w-4"></i>Sign Out</a>
+            </div>
+          </div>
+          <button onclick="document.getElementById('mobMenu').classList.toggle('hidden')" class="md:hidden w-10 h-10 rounded-full bg-cream-200 flex items-center justify-center"><i class="fas fa-bars text-cream-900"></i></button>
+        </div>
+      </div>
+      <div class="md:hidden pb-3"><div class="relative"><input type="text" id="mobSearch" placeholder="Search..." class="w-full h-10 pl-4 pr-12 rounded-full border border-cream-400 bg-white/70 text-cream-900 text-sm focus:outline-none focus:ring-2 focus:ring-caramel-500/40" onkeydown="if(event.key==='Enter')doSearch()"><button onclick="doSearch()" class="absolute right-1 top-1 w-8 h-8 rounded-full bg-caramel-500 text-white flex items-center justify-center"><i class="fas fa-search text-xs"></i></button></div></div>
+    </div>
+  </nav>
+
+  <!-- MOBILE MENU -->
+  <div id="mobMenu" class="fixed inset-0 z-[950] hidden">
+    <div class="absolute inset-0 bg-cream-900/40" onclick="this.parentElement.classList.add('hidden')"></div>
+    <div class="absolute right-0 top-0 h-full w-72 bg-cream-50 shadow-2xl p-6 flex flex-col gap-2">
+      <div class="flex justify-between items-center mb-4"><span class="font-display font-bold text-lg">Menu</span><button onclick="document.getElementById('mobMenu').classList.add('hidden')" class="w-8 h-8 rounded-full bg-cream-200 flex items-center justify-center"><i class="fas fa-times text-sm"></i></button></div>
+      <a href="#" onclick="go('home');document.getElementById('mobMenu').classList.add('hidden');return false" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-cream-200 text-cream-900 font-medium"><i class="fas fa-home w-5 text-caramel-500"></i>Home</a>
+      <a href="#" onclick="go('categories');document.getElementById('mobMenu').classList.add('hidden');return false" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-cream-200 text-cream-900 font-medium"><i class="fas fa-th-large w-5 text-caramel-500"></i>Categories</a>
+      <a href="#" onclick="go('rider');document.getElementById('mobMenu').classList.add('hidden');return false" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-cream-200 text-cream-900 font-medium"><i class="fas fa-motorcycle w-5 text-caramel-500"></i>Riders</a>
+      <a href="#" onclick="go('sell');document.getElementById('mobMenu').classList.add('hidden');return false" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-cream-200 text-cream-900 font-medium"><i class="fas fa-tag w-5 text-caramel-500"></i>Sell</a>
+      <a href="#" onclick="go('orders');document.getElementById('mobMenu').classList.add('hidden');return false" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-cream-200 text-cream-900 font-medium"><i class="fas fa-box w-5 text-caramel-500"></i>Orders</a>
+      <a href="#" onclick="go('profile');document.getElementById('mobMenu').classList.add('hidden');return false" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-cream-200 text-cream-900 font-medium"><i class="fas fa-user w-5 text-caramel-500"></i>Profile</a>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <main id="app"></main>
+
+  <!-- AUTH MODAL -->
+  <div class="modal-backdrop" id="authModal">
+    <div class="modal-content bg-white rounded-2xl max-w-md w-full mx-4 shadow-2xl overflow-hidden">
+      <div class="p-8">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="font-display font-extrabold text-2xl text-cream-900" id="authTitle">Sign In</h2>
+          <button onclick="closeAuth()" class="w-8 h-8 rounded-full bg-cream-200 flex items-center justify-center hover:bg-cream-300"><i class="fas fa-times text-sm"></i></button>
+        </div>
+        <form id="loginForm" onsubmit="doLogin(event)" class="space-y-4">
+          <div><label class="block text-sm font-medium text-cream-900 mb-1">Email</label><input type="email" id="loginEmail" required class="w-full h-11 px-4 rounded-xl border border-cream-400 bg-cream-50 text-cream-900 text-sm focus:outline-none focus:ring-2 focus:ring-caramel-500/40 focus:border-caramel-500" placeholder="you@example.com"></div>
+          <div><label class="block text-sm font-medium text-cream-900 mb-1">Password</label><input type="password" id="loginPass" required class="w-full h-11 px-4 rounded-xl border border-cream-400 bg-cream-50 text-cream-900 text-sm focus:outline-none focus:ring-2 focus:ring-caramel-500/40 focus:border-caramel-500" placeholder="Enter password"></div>
+          <div id="loginErr" class="text-sm text-terracotta-500 hidden"></div>
+          <button type="submit" class="w-full h-12 rounded-xl bg-caramel-500 text-white font-semibold hover:bg-caramel-600 shadow-lg shadow-caramel-500/20">Sign In</button>
+          <p class="text-center text-sm text-cream-800">Don't have an account? <a href="#" onclick="openAuth('register');return false" class="text-caramel-500 font-semibold hover:text-caramel-600">Sign Up</a></p>
+        </form>
+        <form id="regForm" onsubmit="doRegister(event)" class="space-y-4 hidden">
+          <div><label class="block text-sm font-medium text-cream-900 mb-1">Full Name</label><input type="text" id="regName" required class="w-full h-11 px-4 rounded-xl border border-cream-400 bg-cream-50 text-cream-900 text-sm focus:outline-none focus:ring-2 focus:ring-caramel-500/40 focus:border-caramel-500" placeholder="John Doe"></div>
+          <div><label class="block text-sm font-medium text-cream-900 mb-1">Email</label><input type="email" id="regEmail" required class="w-full h-11 px-4 rounded-xl border border-cream-400 bg-cream-50 text-cream-900 text-sm focus:outline-none focus:ring-2 focus:ring-caramel-500/40 focus:border-caramel-500" placeholder="you@example.com"></div>
+          <div><label class="block text-sm font-medium text-cream-900 mb-1">Password</label><input type="password" id="regPass" required minlength="6" class="w-full h-11 px-4 rounded-xl border border-cream-400 bg-cream-50 text-cream-900 text-sm focus:outline-none focus:ring-2 focus:ring-caramel-500/40 focus:border-caramel-500" placeholder="Min 6 characters"></div>
+          <div><label class="block text-sm font-medium text-cream-900 mb-1">Confirm Password</label><input type="password" id="regConf" required class="w-full h-11 px-4 rounded-xl border border-cream-400 bg-cream-50 text-cream-900 text-sm focus:outline-none focus:ring-2 focus:ring-caramel-500/40 focus:border-caramel-500" placeholder="Repeat password"></div>
+          <div id="regErr" class="text-sm text-terracotta-500 hidden"></div>
+          <button type="submit" class="w-full h-12 rounded-xl bg-caramel-500 text-white font-semibold hover:bg-caramel-600 shadow-lg shadow-caramel-500/20">Create Account</button>
+          <p class="text-center text-sm text-cream-800">Already have an account? <a href="#" onclick="openAuth('login');return false" class="text-caramel-500 font-semibold hover:text-caramel-600">Sign In</a></p>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- PRODUCT MODAL -->
+  <div class="modal-backdrop" id="prodModal" onclick="if(event.target===this)this.classList.remove('active')">
+    <div class="modal-content bg-white rounded-2xl max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto shadow-2xl" id="prodModalInner"></div>
+  </div>
+
+  <!-- CART SIDEBAR -->
+  <div class="sidebar-overlay" id="cartOv" onclick="closeCart()"></div>
+  <div class="sidebar-panel" id="cartSB">
+    <div class="p-6">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="font-display font-extrabold text-xl text-cream-900"><i class="fas fa-shopping-bag text-caramel-500 mr-2"></i>Your Cart</h2>
+        <button onclick="closeCart()" class="w-8 h-8 rounded-full bg-cream-200 flex items-center justify-center hover:bg-cream-300"><i class="fas fa-times text-sm"></i></button>
+      </div>
+      <div id="cartItems" class="space-y-4 mb-6"></div>
+      <div id="cartEmpty" class="text-center py-12 hidden"><i class="fas fa-shopping-bag text-4xl text-cream-400 mb-3"></i><p class="text-cream-800 font-medium">Your cart is empty</p></div>
+      <div id="cartFoot" class="border-t border-cream-300 pt-4 hidden">
+        <div class="flex justify-between items-center mb-2"><span class="text-cream-800">Subtotal</span><span class="font-semibold text-cream-900" id="cSub">$0.00</span></div>
+        <div class="flex justify-between items-center mb-2"><span class="text-cream-800">Delivery</span><span class="font-semibold text-sage-500" id="cDel">$0.00</span></div>
+        <div class="flex justify-between items-center mb-4 text-lg"><span class="font-semibold">Total</span><span class="font-display font-extrabold text-caramel-500" id="cTot">$0.00</span></div>
+        <button onclick="doCheckout()" class="w-full h-12 rounded-xl bg-caramel-500 text-white font-semibold hover:bg-caramel-600 shadow-lg shadow-caramel-500/20">Proceed to Checkout</button>
+        <p class="text-center text-xs text-cream-500 mt-3"><i class="fas fa-motorcycle mr-1"></i>Delivered by Vesioh Riders</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHECKOUT MODAL -->
+  <div class="modal-backdrop" id="coModal" onclick="if(event.target===this)this.classList.remove('active')">
+    <div class="modal-content bg-white rounded-2xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto shadow-2xl p-8">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="font-display font-extrabold text-2xl text-cream-900">Checkout</h2>
+        <button onclick="document.getElementById('coModal').classList.remove('active')" class="w-8 h-8 rounded-full bg-cream-200 flex items-center justify-center hover:bg-cream-300"><i class="fas fa-times text-sm"></i></button>
+      </div>
+      <form onsubmit="placeOrder(event)" class="space-y-5">
+        <div><label class="block text-sm font-medium text-cream-900 mb-1">Delivery Address</label><input type="text" required id="coAddr" class="w-full h-11 px-4 rounded-xl border border-cream-400 bg-cream-50 text-cream-900 text-sm focus:outline-none focus:ring-2 focus:ring-caramel-500/40 focus:border-caramel-500" placeholder="Full address"></div>
+        <div class="grid grid-cols-2 gap-4">
+          <div><label class="block text-sm font-medium text-cream-900 mb-1">City</label><input type="text" required id="coCity" class="w-full h-11 px-4 rounded-xl border border-cream-400 bg-cream-50 text-cream-900 text-sm focus:outline-none focus:ring-2 focus:ring-caramel-500/40 focus:border-caramel-500" placeholder="City"></div>
+          <div><label class="block text-sm font-medium text-cream-900 mb-1">ZIP</label><input type="text" required id="coZip" class="w-full h-11 px-4 rounded-xl border border-cream-400 bg-cream-50 text-cream-900 text-sm focus:outline-none focus:ring-2 focus:ring-caramel-500/40 focus:border-caramel-500" placeholder="00000"></div>
+        </div>
+        <div><label class="block text-sm font-medium text-cream-900 mb-1">Phone</label><input type="tel" required id="coPhone" class="w-full h-11 px-4 rounded-xl border border-cream-400 bg-cream-50 text-cream-900 text-sm focus:outline-none focus:ring-2 focus:ring-caramel-500/40 focus:border-caramel-500" placeholder="+1 (555) 000-0000"></div>
+        <div><label class="block text-sm font-medium text-cream-900 mb-1">Delivery Speed</label>
+          <div class="flex gap-3">
+            <label class="flex-1 p-3 rounded-xl border border-cream-400 cursor-pointer hover:border-caramel-500 has-[:checked]:border-caramel-500 has-[:checked]:bg-caramel-500/5 text-center"><input type="radio" name="spd" value="4.99" class="hidden" checked onchange="updCO()"><i class="fas fa-truck text-cream-800 mb-1"></i><div class="text-sm font-medium">Standard</div><div class="text-xs text-cream-800">3-5 days</div></label>
+            <label class="flex-1 p-3 rounded-xl border border-cream-400 cursor-pointer hover:border-caramel-500 has-[:checked]:border-caramel-500 has-[:checked]:bg-caramel-500/5 text-center"><input type="radio" name="spd" value="9.99" class="hidden" onchange="updCO()"><i class="fas fa-shipping-fast text-caramel-500 mb-1"></i><div class="text-sm font-medium">Express</div><div class="text-xs text-cream-800">1-2 days</div></label>
+            <label class="flex-1 p-3 rounded-xl border border-cream-400 cursor-pointer hover:border-caramel-500 has-[:checked]:border-caramel-500 has-[:checked]:bg-caramel-500/5 text-center"><input type="radio" name="spd" value="14.99" class="hidden" onchange="updCO()"><i class="fas fa-bolt text-gold-500 mb-1"></i><div class="text-sm font-medium">Same Day</div><div class="text-xs text-cream-800">Today</div></label>
+          </div>
+        </div>
+        <div><label class="block text-sm font-medium text-cream-900 mb-1">Payment</label>
+          <select required class="w-full h-11 px-4 rounded-xl border border-cream-400 bg-cream-50 text-cream-900 text-sm focus:outline-none focus:ring-2 focus:ring-caramel-500/40 focus:border-caramel-500"><option value="">Select</option><option>Credit/Debit Card</option><option>PayPal</option><option>Apple Pay</option><option>Cash on Delivery</option></select>
+        </div>
+        <div class="bg-cream-100 rounded-xl p-4">
+          <div class="flex justify-between mb-1"><span class="text-sm text-cream-800">Items</span><span class="text-sm font-medium" id="coItems">0</span></div>
+          <div class="flex justify-between mb-1"><span class="text-sm text-cream-800">Subtotal</span><span class="text-sm font-medium" id="coSub">$0</span></div>
+          <div class="flex justify-between mb-1"><span class="text-sm text-cream-800">Delivery</span><span class="text-sm font-medium" id="coDel">$4.99</span></div>
+          <hr class="my-2 border-cream-300">
+          <div class="flex justify-between"><span class="font-semibold">Total</span><span class="font-display font-extrabold text-caramel-500" id="coTot">$0</span></div>
+        </div>
+        <button type="submit" class="w-full h-12 rounded-xl bg-caramel-500 text-white font-semibold hover:bg-caramel-600 shadow-lg shadow-caramel-500/20"><i class="fas fa-lock mr-2"></i>Place Order</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="bg-cream-900 text-cream-400 pt-16 pb-24 md:pb-8 mt-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6">
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-8 mb-12">
+        <div class="col-span-2 md:col-span-1">
+          <div class="flex items-center gap-2 mb-4"><div class="w-9 h-9 rounded-lg bg-caramel-500 flex items-center justify-center"><i class="fas fa-store text-white text-sm"></i></div><span class="font-display font-extrabold text-xl text-white">Vesioh</span></div>
+          <p class="text-sm leading-relaxed">The marketplace that delivers. Buy, sell, and ship with confidence.</p>
+        </div>
+        <div><h4 class="font-semibold text-white text-sm mb-4">Marketplace</h4><ul class="space-y-2 text-sm"><li><a href="#" onclick="go('categories');return false" class="hover:text-caramel-400">All Categories</a></li><li><a href="#" class="hover:text-caramel-400">Deals</a></li><li><a href="#" class="hover:text-caramel-400">Trending</a></li></ul></div>
+        <div><h4 class="font-semibold text-white text-sm mb-4">Selling</h4><ul class="space-y-2 text-sm"><li><a href="#" onclick="go('sell');return false" class="hover:text-caramel-400">List an Item</a></li><li><a href="#" class="hover:text-caramel-400">Seller Hub</a></li><li><a href="#" class="hover:text-caramel-400">Guidelines</a></li></ul></div>
+        <div><h4 class="font-semibold text-white text-sm mb-4">Riders</h4><ul class="space-y-2 text-sm"><li><a href="#" onclick="go('rider');return false" class="hover:text-caramel-400">Apply Now</a></li><li><a href="#" class="hover:text-caramel-400">Dashboard</a></li><li><a href="#" class="hover:text-caramel-400">Earnings</a></li></ul></div>
+        <div><h4 class="font-semibold text-white text-sm mb-4">Support</h4><ul class="space-y-2 text-sm"><li><a href="#" class="hover:text-caramel-400">Help Center</a></li><li><a href="#" class="hover:text-caramel-400">Contact Us</a></li><li><a href="#" class="hover:text-caramel-400">Privacy</a></li></ul></div>
+      </div>
+      <div class="border-t border-cream-800 pt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <p class="text-xs">&copy; 2025 Vesioh. All rights reserved.</p>
+        <div class="flex gap-4">
+          <a href="#" class="w-9 h-9 rounded-full bg-cream-800 flex items-center justify-center hover:bg-caramel-500 transition-colors"><i class="fab fa-twitter text-sm"></i></a>
+          <a href="#" class="w-9 h-9 rounded-full bg-cream-800 flex items-center justify-center hover:bg-caramel-500 transition-colors"><i class="fab fa-instagram text-sm"></i></a>
+          <a href="#" class="w-9 h-9 rounded-full bg-cream-800 flex items-center justify-center hover:bg-caramel-500 transition-colors"><i class="fab fa-facebook-f text-sm"></i></a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- MOBILE NAV -->
+  <nav class="mobile-nav md:hidden">
+    <div class="flex justify-around items-center">
+      <button onclick="go('home')" class="flex flex-col items-center gap-0.5 py-1 px-3 text-caramel-500 mob-nav" data-m="home"><i class="fas fa-home text-lg"></i><span class="text-[10px] font-medium">Home</span></button>
+      <button onclick="go('categories')" class="flex flex-col items-center gap-0.5 py-1 px-3 text-cream-800 mob-nav" data-m="categories"><i class="fas fa-th-large text-lg"></i><span class="text-[10px] font-medium">Categories</span></button>
+      <button onclick="openCart()" class="flex flex-col items-center gap-0.5 py-1 px-3 text-cream-800 relative"><i class="fas fa-shopping-bag text-lg"></i><span class="text-[10px] font-medium">Cart</span><span id="mobCartBadge" class="absolute -top-0.5 right-0 w-4 h-4 rounded-full bg-terracotta-500 text-white text-[8px] font-bold flex items-center justify-center hidden">0</span></button>
+      <button onclick="go('rider')" class="flex flex-col items-center gap-0.5 py-1 px-3 text-cream-800 mob-nav" data-m="rider"><i class="fas fa-motorcycle text-lg"></i><span class="text-[10px] font-medium">Riders</span></button>
+      <button onclick="go('profile')" class="flex flex-col items-center gap-0.5 py-1 px-3 text-cream-800 mob-nav" data-m="profile"><i class="fas fa-user text-lg"></i><span class="text-[10px] font-medium">Profile</span></button>
+    </div>
+  </nav>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

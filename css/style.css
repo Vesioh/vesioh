@@ -1,0 +1,40 @@
+:root{--bg:#FFF8F0;--card:#FFFCF7;--fg:#2C1810;--muted:#7A6558;--accent:#C47D4E;--border:#E8D5C4;--success:#5B8C5A;--warning:#D4A24E;--danger:#C0544F}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--fg)}
+::-webkit-scrollbar{width:7px}
+::-webkit-scrollbar-track{background:#FFF1E6}
+::-webkit-scrollbar-thumb{background:#E8D5C4;border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:#C47D4E}
+.bg-pattern{background-image:radial-gradient(circle at 20% 50%,rgba(196,125,78,.06) 0%,transparent 50%),radial-gradient(circle at 80% 20%,rgba(212,162,78,.06) 0%,transparent 50%),radial-gradient(circle at 50% 80%,rgba(196,84,79,.04) 0%,transparent 50%)}
+.blob{position:absolute;border-radius:50%;filter:blur(80px);opacity:.15;pointer-events:none;z-index:0;animation:bf 12s ease-in-out infinite alternate}
+@keyframes bf{0%{transform:translate(0,0) scale(1)}50%{transform:translate(30px,-20px) scale(1.1)}100%{transform:translate(-20px,30px) scale(.95)}}
+.product-card{transition:transform .3s,box-shadow .3s}
+.product-card:hover{transform:translateY(-6px);box-shadow:0 20px 40px rgba(44,24,16,.1)}
+.modal-backdrop{position:fixed;inset:0;background:rgba(44,24,16,.5);backdrop-filter:blur(6px);z-index:1000;display:none;align-items:center;justify-content:center}
+.modal-backdrop.active{display:flex}
+@keyframes su{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+.modal-content{animation:su .3s ease}
+.toast-container{position:fixed;top:80px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+.toast{padding:14px 20px;border-radius:10px;color:#fff;font-weight:500;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.15);animation:ti .3s ease,to .3s ease 2.7s forwards;max-width:360px}
+@keyframes ti{from{opacity:0;transform:translateX(60px)}to{opacity:1;transform:translateX(0)}}
+@keyframes to{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(60px)}}
+.sidebar-panel{position:fixed;top:0;right:-460px;width:440px;max-width:95vw;height:100vh;background:var(--card);z-index:1100;transition:right .35s cubic-bezier(.4,0,.2,1);box-shadow:-10px 0 40px rgba(44,24,16,.1);overflow-y:auto}
+.sidebar-panel.open{right:0}
+.sidebar-overlay{position:fixed;inset:0;background:rgba(44,24,16,.4);z-index:1050;display:none;backdrop-filter:blur(3px)}
+.sidebar-overlay.open{display:block}
+.img-zoom{overflow:hidden}
+.img-zoom img{transition:transform .5s}
+.img-zoom:hover img{transform:scale(1.08)}
+.tab-active{border-bottom:3px solid var(--accent);color:var(--accent)!important;font-weight:600}
+.rider-map{background:linear-gradient(135deg,#F5E6D3 0%,#FFF1E6 100%);position:relative;overflow:hidden}
+.rider-map::before{content:'';position:absolute;inset:0;background-image:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none'%3E%3Cg fill='%23C47D4E' fill-opacity='.08'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")}
+.rider-dot{width:14px;height:14px;border-radius:50%;background:var(--accent);position:absolute;animation:rm 8s ease-in-out infinite}
+@keyframes rm{0%{top:20%;left:15%}25%{top:40%;left:45%}50%{top:55%;left:70%}75%{top:35%;left:55%}100%{top:20%;left:15%}}
+.badge-pulse{animation:bp 2s ease-in-out infinite}
+@keyframes bp{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+.nav-link{position:relative}
+.nav-link::after{content:'';position:absolute;bottom:-4px;left:0;width:0;height:2px;background:var(--accent);transition:width .25s}
+.nav-link:hover::after,.nav-link.active::after{width:100%}
+.mobile-nav{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--border);z-index:900;padding:6px 0 env(safe-area-inset-bottom,6px)}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
